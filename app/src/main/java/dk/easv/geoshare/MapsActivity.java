@@ -1,5 +1,7 @@
 package dk.easv.geoshare;
 
+import android.content.Intent;
+import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -11,9 +13,14 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.io.File;
+
+import dk.easv.geoshare.BE.PhotoLocal;
 import dk.easv.geoshare.model.PictureHelper;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+    private File photofile;
+    private final static int PHOTO_REQUEST_CODE = 101;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,7 +35,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         findViewById(R.id.btnPicture).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                pictureHelper.takePicture();
+                photofile = pictureHelper.takePicture(PHOTO_REQUEST_CODE);
             }
         });
     }
@@ -50,5 +57,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng sydney = new LatLng(-34, 151);
         googleMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if (requestCode == PHOTO_REQUEST_CODE && resultCode == RESULT_OK){
+            new PhotoLocal(photofile, null);
+            // TODO take photofile and the current location and upload it to firebase and put Photo on map
+        }
     }
 }
