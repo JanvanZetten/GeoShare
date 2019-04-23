@@ -15,6 +15,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.UUID;
 
+import dk.easv.geoshare.CustomCameraActivity;
+
 public class PictureHelper {
     private static final String LOGTAG = "Picture helper log";
     private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
@@ -54,7 +56,7 @@ public class PictureHelper {
         }
 
         // create Intent to take a picture
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        Intent intent = new Intent(context, CustomCameraActivity.class);
         intent.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(
                 context,
                 "dk.easv.geoshare.provider", //(use your app signature + ".provider" )

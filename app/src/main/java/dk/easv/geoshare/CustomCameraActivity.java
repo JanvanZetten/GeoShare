@@ -1,18 +1,6 @@
 package dk.easv.geoshare;
 
 import android.content.Context;
-import android.graphics.SurfaceTexture;
-import android.hardware.camera2.CameraCharacteristics;
-import android.hardware.camera2.CameraDevice;
-import android.hardware.camera2.CameraManager;
-import android.os.Bundle;
-import android.provider.MediaStore;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
-import android.view.TextureView;
-import android.view.View;
-import android.Manifest;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
@@ -23,13 +11,14 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
-import android.os.Environment;
+import android.net.Uri;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.provider.MediaStore;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 import android.view.TextureView;
@@ -38,12 +27,7 @@ import android.view.View;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.Collections;
-import java.util.Date;
-import java.util.Locale;
-
-import dk.easv.geoshare.model.PictureHelper;
 
 public class CustomCameraActivity extends AppCompatActivity {
 
@@ -153,9 +137,33 @@ public class CustomCameraActivity extends AppCompatActivity {
     }
 
     private void setUpCamera() {
+        try {
+            for (String cameraId : cameraManager.getCameraIdList()) {
+                CameraCharacteristics cameraCharacteristics =
+                        cameraManager.getCameraCharacteristics(cameraId);
+                if (cameraCharacteristics.get(CameraCharacteristics.LENS_FACING) ==
+                        cameraFacing) {
+                    StreamConfigurationMap streamConfigurationMap = cameraCharacteristics.get(
+                            CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+                    previewSize = streamConfigurationMap.getOutputSizes(SurfaceTexture.class)[0];
+                    this.cameraId = cameraId;
+                }
+            }
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
     }
     
     private void openCamera() {
+        try {
+            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA)
+                    == PackageManager.PERMISSION_GRANTED) {
+
+                cameraManager.openCamera(cameraId, stateCallback, backgroundHandler);
+            }
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
     }
 
     private void takePhoto() {
@@ -165,6 +173,7 @@ public class CustomCameraActivity extends AppCompatActivity {
             outputPhoto = new FileOutputStream(f);
             textureView.getBitmap()
                     .compress(Bitmap.CompressFormat.JPEG, 100, outputPhoto);
+            finish();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -179,7 +188,8 @@ public class CustomCameraActivity extends AppCompatActivity {
     }
 
     private File getOutputMediaFile() {
-        return null; // TODO Return the file with path from intent
+        Uri uri = (Uri)getIntent().getSerializableExtra(MediaStore.EXTRA_OUTPUT);
+        return new File(uri.getPath());
     }
 
     void createPreviewSession() {
