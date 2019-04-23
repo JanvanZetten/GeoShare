@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "468936032534",
+    "firebase_url": "https://geoshare-71aaa.firebaseio.com",
+    "project_id": "geoshare-71aaa",
+    "storage_bucket": "geoshare-71aaa.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:468936032534:android:226555b08c2ab75a",
+        "android_client_info": {
+          "package_name": "dk.easv.geoshare"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "468936032534-h0q7jvcf8tgc87b89i7jrl6f0a5lptin.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIDLoJggNirdm_5eEXeYHX9-LXT_UicHA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "468936032534-h0q7jvcf8tgc87b89i7jrl6f0a5lptin.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
