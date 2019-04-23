@@ -6,6 +6,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.TextureView;
@@ -41,6 +42,8 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Locale;
+
+import dk.easv.geoshare.model.PictureHelper;
 
 public class CustomCameraActivity extends AppCompatActivity {
 
@@ -156,9 +159,63 @@ public class CustomCameraActivity extends AppCompatActivity {
     }
 
     private void takePhoto() {
+        FileOutputStream outputPhoto = null;
+        try {
+            File f = getOutputMediaFile();
+            outputPhoto = new FileOutputStream(f);
+            textureView.getBitmap()
+                    .compress(Bitmap.CompressFormat.JPEG, 100, outputPhoto);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (outputPhoto != null) {
+                    outputPhoto.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
-    
+
+    private File getOutputMediaFile() {
+        return null; // TODO Return the file with path from intent
+    }
+
     void createPreviewSession() {
+        try {
+            SurfaceTexture surfaceTexture = textureView.getSurfaceTexture();
+            surfaceTexture.setDefaultBufferSize(previewSize.getWidth(), previewSize.getHeight());
+            Surface previewSurface = new Surface(surfaceTexture);
+            final CaptureRequest.Builder captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            captureRequestBuilder.addTarget(previewSurface);
+
+            cameraDevice.createCaptureSession(Collections.singletonList(previewSurface),
+                    new CameraCaptureSession.StateCallback() {
+
+                        @Override
+                        public void onConfigured(CameraCaptureSession cameraCaptureSession) {
+                            if (cameraDevice == null) {
+                                return;
+                            }
+
+                            try {
+                                CaptureRequest captureRequest = captureRequestBuilder.build();
+                                CustomCameraActivity.this.cameraCaptureSession = cameraCaptureSession;
+                                CustomCameraActivity.this.cameraCaptureSession.setRepeatingRequest(captureRequest,
+                                        null, backgroundHandler);
+                            } catch (CameraAccessException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        @Override
+                        public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
+
+                        }
+                    }, backgroundHandler);
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
     }
-    
 }
