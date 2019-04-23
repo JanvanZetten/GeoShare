@@ -188,7 +188,7 @@ public class CustomCameraActivity extends AppCompatActivity {
     }
 
     private File getOutputMediaFile() {
-        Uri uri = (Uri)getIntent().getSerializableExtra(MediaStore.EXTRA_OUTPUT);
+        Uri uri = (Uri)getIntent().getParcelableExtra(MediaStore.EXTRA_OUTPUT);
         return new File(uri.getPath());
     }
 
