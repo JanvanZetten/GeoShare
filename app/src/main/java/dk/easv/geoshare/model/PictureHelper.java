@@ -15,7 +15,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.UUID;
 
-import dk.easv.geoshare.CustomCameraActivity;
+import dk.easv.geoshare.CustomCamera.CustomCameraActivity;
 
 public class PictureHelper {
     private static final String LOGTAG = "Picture helper log";
