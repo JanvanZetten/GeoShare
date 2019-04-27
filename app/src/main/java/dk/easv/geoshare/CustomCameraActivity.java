@@ -19,6 +19,7 @@ import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 import android.view.TextureView;
@@ -32,23 +33,14 @@ import java.util.Collections;
 public class CustomCameraActivity extends AppCompatActivity {
 
     private TextureView textureView;
-
     private CameraDevice cameraDevice;
-
     private CameraManager cameraManager;
-
     private int cameraFacing;
-
     private String cameraId;
-
     private TextureView.SurfaceTextureListener surfaceTextureListener;
-
     private Size previewSize;
-
     private CameraCaptureSession cameraCaptureSession;
-
     private HandlerThread backgroundThread;
-
     private Handler backgroundHandler;
 
     CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
@@ -221,7 +213,7 @@ public class CustomCameraActivity extends AppCompatActivity {
 
                         @Override
                         public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
-
+                            Log.e("Custom Camera", "The Camera Failed");
                         }
                     }, backgroundHandler);
         } catch (CameraAccessException e) {
