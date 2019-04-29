@@ -70,7 +70,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (requestCode == PHOTO_REQUEST_CODE && resultCode == RESULT_OK){
-            new PhotoLocal(photofile, null);
             fireStorageHelper.UploadPhoto(photofile, new PhotoMetaData(new Long(123), new Long(123), photofile.lastModified()));
             // TODO take photofile and the current location and upload it to firebase and put Photo on map
         }

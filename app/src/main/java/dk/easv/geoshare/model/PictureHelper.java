@@ -57,11 +57,7 @@ public class PictureHelper {
 
         // create Intent to take a picture
         Intent intent = new Intent(context, CustomCameraActivity.class);
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(
-                context,
-                "dk.easv.geoshare.provider", //(use your app signature + ".provider" )
-                photoFile));
-
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, photoFile);
         if (intent.resolveActivity(context.getPackageManager()) != null) {
             ((Activity)context).startActivityForResult(intent, requstCode);
         } else

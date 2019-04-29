@@ -16,8 +16,7 @@ public class CustomCameraActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.custom_camera);
-        Uri uri = getIntent().getParcelableExtra(MediaStore.EXTRA_OUTPUT);
-        File outputFile = new File(uri.getPath());
+        File outputFile = (File)getIntent().getSerializableExtra(MediaStore.EXTRA_OUTPUT);
         if (null == savedInstanceState) {
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.container, Camera2BasicFragment.newInstance(outputFile))

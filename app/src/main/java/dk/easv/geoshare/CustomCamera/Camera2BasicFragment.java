@@ -74,7 +74,7 @@ import java.util.concurrent.TimeUnit;
 import dk.easv.geoshare.R;
 
 public class Camera2BasicFragment extends Fragment
-        implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
+        implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback, WritingInfoCallback {
 
     /**
      * Conversion from screen rotation to JPEG orientation.
@@ -90,6 +90,8 @@ public class Camera2BasicFragment extends Fragment
         ORIENTATIONS.append(Surface.ROTATION_180, 270);
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
+
+    private boolean writeDone = false;
 
     /**
      * Tag for the {@link Log}.
@@ -237,6 +239,8 @@ public class Camera2BasicFragment extends Fragment
      */
     private File mFile;
 
+    private WritingInfoCallback writingInfoCallback = this;
+
     /**
      * This a callback object for the {@link ImageReader}. "onImageAvailable" will be called when a
      * still image is ready to be saved.
@@ -246,7 +250,7 @@ public class Camera2BasicFragment extends Fragment
 
         @Override
         public void onImageAvailable(ImageReader reader) {
-            mBackgroundHandler.post(new ImageSaver(reader.acquireNextImage(), mFile));
+            mBackgroundHandler.post(new ImageSaver(reader.acquireNextImage(), mFile, writingInfoCallback));
         }
 
     };
@@ -447,7 +451,7 @@ public class Camera2BasicFragment extends Fragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_camera2_basic, container, false);
+        return inflater.inflate(R.layout.fragment_camera, container, false);
     }
 
     @Override
@@ -867,7 +871,20 @@ public class Camera2BasicFragment extends Fragment
                     unlockFocus();
                     Activity activity = getActivity();
                     activity.setResult(Activity.RESULT_OK);
-                    activity.finish();
+                    while (true){
+                        if (writeDone){
+                            activity.finish();
+                            break;
+                        }else{
+                            try {
+                                Log.e("Camera2BasicFragment", "Waiting for 10 ms because the file isn't ready yet");
+                                wait(10);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+
+                        }
+                    }
                 }
             };
 
@@ -931,6 +948,11 @@ public class Camera2BasicFragment extends Fragment
         }
     }
 
+    @Override
+    public void writeDone() {
+        this.writeDone = true;
+    }
+
     /**
      * Saves a JPEG {@link Image} into the specified {@link File}.
      */
@@ -945,9 +967,12 @@ public class Camera2BasicFragment extends Fragment
          */
         private final File mFile;
 
-        ImageSaver(Image image, File file) {
+        private WritingInfoCallback mWritingInfoCallback;
+
+        ImageSaver(Image image, File file, WritingInfoCallback writingInfoCallback) {
             mImage = image;
             mFile = file;
+            mWritingInfoCallback = writingInfoCallback;
         }
 
         @Override
@@ -971,6 +996,7 @@ public class Camera2BasicFragment extends Fragment
                     }
                 }
             }
+            mWritingInfoCallback.writeDone();
         }
 
     }
