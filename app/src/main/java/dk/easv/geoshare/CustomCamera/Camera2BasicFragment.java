@@ -334,6 +334,8 @@ public class Camera2BasicFragment extends Fragment
             }
         }
 
+
+
         @Override
         public void onCaptureProgressed(@NonNull CameraCaptureSession session,
                                         @NonNull CaptureRequest request,
@@ -351,6 +353,14 @@ public class Camera2BasicFragment extends Fragment
     };
 
     /**
+     * Set the Arguments for the fragment
+     * @param outputFile
+     */
+    public void setArguments(File outputFile){
+        this.mFile = outputFile;
+    }
+
+    /**
      * Shows a {@link Toast} on the UI thread.
      *
      * @param text The message to show
@@ -361,7 +371,7 @@ public class Camera2BasicFragment extends Fragment
             activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(activity, text, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, text, Toast.LENGTH_LONG).show();
                 }
             });
         }
@@ -417,7 +427,14 @@ public class Camera2BasicFragment extends Fragment
     }
 
     public static Camera2BasicFragment newInstance() {
-        return new Camera2BasicFragment();
+        Camera2BasicFragment instance = new Camera2BasicFragment();
+        return instance;
+    }
+
+    public static Camera2BasicFragment newInstance(File outputFile) {
+        Camera2BasicFragment instance = new Camera2BasicFragment();
+        instance.setArguments(outputFile);
+        return instance;
     }
 
     @Override
@@ -435,7 +452,9 @@ public class Camera2BasicFragment extends Fragment
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mFile = new File(getActivity().getExternalFilesDir(null), "pic.jpg");
+        if (mFile == null){
+            mFile = new File(getActivity().getExternalFilesDir(null), "pic.jpg");
+        }
     }
 
     @Override
@@ -514,7 +533,7 @@ public class Camera2BasicFragment extends Fragment
                         Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
                         new CompareSizesByArea());
                 mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
-                        ImageFormat.JPEG, /*maxImages*/2);
+                        ImageFormat.JPEG, /*maxImages*/1);
                 mImageReader.setOnImageAvailableListener(
                         mOnImageAvailableListener, mBackgroundHandler);
 
@@ -839,6 +858,9 @@ public class Camera2BasicFragment extends Fragment
                     showToast("Saved: " + mFile);
                     Log.d(TAG, mFile.toString());
                     unlockFocus();
+                    Activity activity = getActivity();
+                    activity.setResult(Activity.RESULT_OK);
+                    activity.finish();
                 }
             };
 
