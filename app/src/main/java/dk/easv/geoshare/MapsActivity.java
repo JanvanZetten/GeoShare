@@ -8,7 +8,6 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
@@ -26,12 +25,12 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Observable;
 
 import dk.easv.geoshare.BE.PhotoLocal;
 import dk.easv.geoshare.BE.PhotoMetaData;
 import dk.easv.geoshare.model.FireStoreHelper;
 import dk.easv.geoshare.model.MyLocationListener;
+import dk.easv.geoshare.model.ObservableArrayList;
 import dk.easv.geoshare.model.PictureHelper;
 import dk.easv.geoshare.model.StoreListener;
 
@@ -54,7 +53,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         fireStoreHelper = new FireStoreHelper();
         fireStoreHelper.getPhotoMeta();
 
-        fireStoreHelper.setStoreListener(new StoreListener() {
+        ObservableArrayList.addOnDataLoadedListener(new StoreListener() {
             @Override
             public void onDataLoaded(ArrayList<PhotoMetaData> photoMetaDataArrayList) {
                 Log.d("FireStor", "onCreate: " + photoMetaDataArrayList.size());

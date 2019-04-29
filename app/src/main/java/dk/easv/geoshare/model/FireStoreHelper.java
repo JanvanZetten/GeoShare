@@ -33,18 +33,12 @@ public class FireStoreHelper {
 
     private String TAG = "FireStoreHelper";
 
-    private StoreListener listener;
-
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     private FirebaseStorage storage = FirebaseStorage.getInstance();
     private StorageReference storageRef = storage.getReference();
 
     final ArrayList<PhotoMetaData> photoMetaDataArrayList = new ArrayList<>();
-
-    public void setStoreListener(StoreListener listener) {
-        this.listener = listener;
-    }
 
     public void getPhotoMeta() {
         final CollectionReference colRef = db.collection("photoMetaData");
@@ -69,9 +63,7 @@ public class FireStoreHelper {
                     photoMetaDataArrayList.add(photoMetaData);
                 }
 
-                if (listener != null) {
-                    listener.onDataLoaded(photoMetaDataArrayList);
-                }
+                ObservableArrayList.setPhotoMetaDataArrayList(photoMetaDataArrayList);
             }
         });
     }
