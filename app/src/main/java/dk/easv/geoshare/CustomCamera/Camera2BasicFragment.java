@@ -82,6 +82,7 @@ public class Camera2BasicFragment extends Fragment
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
     private static final int REQUEST_CAMERA_PERMISSION = 1;
     private static final String FRAGMENT_DIALOG = "dialog";
+    private static final String OUTPUT_FILE_STATE_KEY = "outputFile";
 
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
@@ -352,6 +353,12 @@ public class Camera2BasicFragment extends Fragment
 
     };
 
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable(OUTPUT_FILE_STATE_KEY, mFile);
+    }
+
     /**
      * Set the Arguments for the fragment
      * @param outputFile
@@ -452,8 +459,8 @@ public class Camera2BasicFragment extends Fragment
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        if (mFile == null){
-            mFile = new File(getActivity().getExternalFilesDir(null), "pic.jpg");
+        if(savedInstanceState != null){
+            this.mFile = (File)savedInstanceState.getSerializable(OUTPUT_FILE_STATE_KEY);
         }
     }
 
@@ -1045,5 +1052,4 @@ public class Camera2BasicFragment extends Fragment
                     .create();
         }
     }
-
 }

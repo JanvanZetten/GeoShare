@@ -35,8 +35,8 @@
             android:layout_height="60dp"
             android:layout_gravity="center"
             android:text="@string/picture"
-            android:background="@drawable/circle"
-            android:src="@drawable/ic_camera_alt_black_24dp"
+            android:background="@drawable/circle_light"
+            android:src="@drawable/ic_camera_alt_white_24dp"
             android:padding="10dp"/>
 
     </FrameLayout>
