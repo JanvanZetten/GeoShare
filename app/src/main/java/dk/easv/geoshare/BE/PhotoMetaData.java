@@ -1,22 +1,21 @@
 package dk.easv.geoshare.BE;
 
-import com.google.firebase.FirebaseApp;
-
 import java.io.Serializable;
-import java.sql.Timestamp;
 
 public class PhotoMetaData implements Serializable {
 
     private String photoID;
-    private Long lat;
-    private Long lng;
+
+    private double lat;
+    private double lng;
     private Long timestamp;
+    private String photoUrl;
 
     public PhotoMetaData() {
 
     }
 
-    public PhotoMetaData(Long lat, Long lng, Long timestamp) {
+    public PhotoMetaData(double lat, double lng, Long timestamp) {
         this.lat = lat;
         this.lng = lng;
         this.timestamp = timestamp;
@@ -30,15 +29,29 @@ public class PhotoMetaData implements Serializable {
         return photoID;
     }
 
-    public Long getLat() {
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
+    }
+
+    public double getLat() {
         return lat;
     }
 
-    public Long getLng() {
+    public double getLng() {
         return lng;
     }
 
     public Long getTimestamp() {
         return timestamp;
+    }
+
+
+    @Override
+    public String toString() {
+        return "\nlat: " + lat + "\nLng: " + lng + "\nTimestamp: " + timestamp + "\nPhotoId: " + photoID + "\nPhotoUrl: " + photoUrl + "\n";
     }
 }
