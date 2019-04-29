@@ -26,11 +26,6 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.File;
 import java.util.ArrayList;
-<<<<<<< HEAD
-=======
-import java.util.HashMap;
-import java.util.Map;
->>>>>>> 2b2d3605549764510037b878a2ad1e6f3a361e93
 
 import dk.easv.geoshare.BE.PhotoLocal;
 import dk.easv.geoshare.BE.PhotoMetaData;
@@ -115,9 +110,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (requestCode == PHOTO_REQUEST_CODE && resultCode == RESULT_OK) {
             new PhotoLocal(photofile, null);
-<<<<<<< HEAD
-            fireStoreHelper.UploadPhoto(photofile, new PhotoMetaData(1.23, 1.2, photofile.lastModified()));
-=======
+
             LatLng coordinates = null;
             try {
                 coordinates = getCurrentLocation();
@@ -127,8 +120,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             double latitude = coordinates.latitude;
             double longitude = coordinates.longitude;
 
-            fireStorageHelper.UploadPhoto(photofile, new PhotoMetaData(latitude, longitude, photofile.lastModified()));
->>>>>>> 2b2d3605549764510037b878a2ad1e6f3a361e93
+            fireStoreHelper.UploadPhoto(photofile, new PhotoMetaData(latitude, longitude, photofile.lastModified()));
             // TODO take photofile and the current location and upload it to firebase and put Photo on map
         }
     }
