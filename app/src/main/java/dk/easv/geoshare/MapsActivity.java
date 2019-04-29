@@ -11,16 +11,22 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.File;
 
 import dk.easv.geoshare.BE.PhotoLocal;
+import dk.easv.geoshare.BE.PhotoMetaData;
+import dk.easv.geoshare.model.FireStorageHelper;
+import dk.easv.geoshare.model.FireStoreHelper;
 import dk.easv.geoshare.model.PictureHelper;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
     private File photofile;
     private final static int PHOTO_REQUEST_CODE = 101;
+    final FireStoreHelper fireStoreHelper = new FireStoreHelper();
+    final FireStorageHelper fireStorageHelper = new FireStorageHelper();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +36,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        fireStoreHelper.getPhotoMeta();
 
         final PictureHelper pictureHelper = new PictureHelper(this);
         findViewById(R.id.btnPicture).setOnClickListener(new View.OnClickListener() {
@@ -63,6 +71,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (requestCode == PHOTO_REQUEST_CODE && resultCode == RESULT_OK){
             new PhotoLocal(photofile, null);
+            fireStorageHelper.UploadPhoto(photofile, new PhotoMetaData(new Long(123), new Long(123), photofile.lastModified()));
             // TODO take photofile and the current location and upload it to firebase and put Photo on map
         }
     }
