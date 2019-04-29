@@ -8,15 +8,16 @@ import java.sql.Timestamp;
 public class PhotoMetaData implements Serializable {
 
     private String photoID;
-    private Long lat;
-    private Long lng;
+    private Double lat;
+    private Double lng;
     private Long timestamp;
+    private String photoUrl;
 
     public PhotoMetaData() {
 
     }
 
-    public PhotoMetaData(Long lat, Long lng, Long timestamp) {
+    public PhotoMetaData(Double lat, Double lng, Long timestamp) {
         this.lat = lat;
         this.lng = lng;
         this.timestamp = timestamp;
@@ -30,15 +31,30 @@ public class PhotoMetaData implements Serializable {
         return photoID;
     }
 
-    public Long getLat() {
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
+    }
+
+    public Double getLat() {
         return lat;
     }
 
-    public Long getLng() {
+    public Double getLng() {
         return lng;
     }
 
     public Long getTimestamp() {
         return timestamp;
+    }
+
+
+
+    @Override
+    public String toString() {
+        return "lat: " + lat + "\nLng: " + lng + "\nTimestamp: " + timestamp + "\nPhotoId: " + photoID + "\nPhotoUrl: " + photoUrl + "\n";
     }
 }

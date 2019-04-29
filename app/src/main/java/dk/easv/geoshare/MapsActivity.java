@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -11,22 +12,21 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import dk.easv.geoshare.BE.PhotoLocal;
 import dk.easv.geoshare.BE.PhotoMetaData;
-import dk.easv.geoshare.model.FireStorageHelper;
 import dk.easv.geoshare.model.FireStoreHelper;
 import dk.easv.geoshare.model.PictureHelper;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
     private File photofile;
     private final static int PHOTO_REQUEST_CODE = 101;
-    final FireStoreHelper fireStoreHelper = new FireStoreHelper();
-    final FireStorageHelper fireStorageHelper = new FireStorageHelper();
+    private FireStoreHelper fireStoreHelper = new FireStoreHelper();
+    private ArrayList<PhotoMetaData> photoMetaDataArrayList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +37,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        fireStoreHelper.getPhotoMeta();
+        fireStoreHelper = new FireStoreHelper();
+
+        photoMetaDataArrayList = fireStoreHelper.getPhotoMeta();
+
+        Log.d("FireStor", "onCreate: " + photoMetaDataArrayList);
 
         final PictureHelper pictureHelper = new PictureHelper(this);
         findViewById(R.id.btnPicture).setOnClickListener(new View.OnClickListener() {
@@ -69,9 +73,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode == PHOTO_REQUEST_CODE && resultCode == RESULT_OK){
+        if (requestCode == PHOTO_REQUEST_CODE && resultCode == RESULT_OK) {
             new PhotoLocal(photofile, null);
-            fireStorageHelper.UploadPhoto(photofile, new PhotoMetaData(new Long(123), new Long(123), photofile.lastModified()));
+            fireStoreHelper.UploadPhoto(photofile, new PhotoMetaData(1.23, 1.2, photofile.lastModified()));
             // TODO take photofile and the current location and upload it to firebase and put Photo on map
         }
     }
