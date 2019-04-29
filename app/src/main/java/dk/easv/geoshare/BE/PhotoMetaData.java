@@ -52,6 +52,6 @@ public class PhotoMetaData implements Serializable {
 
     @Override
     public String toString() {
-        return "lat: " + lat + "\nLng: " + lng + "\nTimestamp: " + timestamp + "\nPhotoId: " + photoID + "\nPhotoUrl: " + photoUrl + "\n";
+        return "\nlat: " + lat + "\nLng: " + lng + "\nTimestamp: " + timestamp + "\nPhotoId: " + photoID + "\nPhotoUrl: " + photoUrl + "\n";
     }
 }

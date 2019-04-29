@@ -26,12 +26,14 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Observable;
 
 import dk.easv.geoshare.BE.PhotoLocal;
 import dk.easv.geoshare.BE.PhotoMetaData;
 import dk.easv.geoshare.model.FireStoreHelper;
 import dk.easv.geoshare.model.MyLocationListener;
 import dk.easv.geoshare.model.PictureHelper;
+import dk.easv.geoshare.model.StoreListener;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
     private File photofile;
@@ -50,10 +52,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
 
         fireStoreHelper = new FireStoreHelper();
+        fireStoreHelper.getPhotoMeta();
 
-        photoMetaDataArrayList = fireStoreHelper.getPhotoMeta();
+        fireStoreHelper.setStoreListener(new StoreListener() {
+            @Override
+            public void onDataLoaded(ArrayList<PhotoMetaData> photoMetaDataArrayList) {
+                Log.d("FireStor", "onCreate: " + photoMetaDataArrayList.size());
+            }
+        });
 
-        Log.d("FireStor", "onCreate: " + photoMetaDataArrayList);
 
         final PictureHelper pictureHelper = new PictureHelper(this);
         findViewById(R.id.btnPicture).setOnClickListener(new View.OnClickListener() {

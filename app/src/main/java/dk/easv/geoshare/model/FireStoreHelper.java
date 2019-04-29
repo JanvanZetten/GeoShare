@@ -21,7 +21,6 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +33,8 @@ public class FireStoreHelper {
 
     private String TAG = "FireStoreHelper";
 
+    private StoreListener listener;
+
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     private FirebaseStorage storage = FirebaseStorage.getInstance();
@@ -41,19 +42,21 @@ public class FireStoreHelper {
 
     final ArrayList<PhotoMetaData> photoMetaDataArrayList = new ArrayList<>();
 
+    public void setStoreListener(StoreListener listener) {
+        this.listener = listener;
+    }
 
-    public ArrayList<PhotoMetaData> getPhotoMeta() {
+    public void getPhotoMeta() {
         final CollectionReference colRef = db.collection("photoMetaData");
-
         colRef.addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
             public void onEvent(@Nullable QuerySnapshot snapshots,
                                 @Nullable FirebaseFirestoreException e) {
-
                 if (e != null) {
                     Log.w(TAG, "Listen failed.", e);
                     return;
                 }
+                photoMetaDataArrayList.clear();
 
                 for (QueryDocumentSnapshot snapShot : snapshots) {
                     Map<String, Object> data = snapShot.getData();
@@ -66,12 +69,11 @@ public class FireStoreHelper {
                     photoMetaDataArrayList.add(photoMetaData);
                 }
 
+                if (listener != null) {
+                    listener.onDataLoaded(photoMetaDataArrayList);
+                }
             }
         });
-
-        Log.d(TAG, "getPhotoMeta: " + photoMetaDataArrayList.toString());
-
-        return photoMetaDataArrayList;
     }
 
     public void addPhotoMeta(PhotoMetaData meta) {
@@ -135,7 +137,5 @@ public class FireStoreHelper {
                 }
             }
         });
-
     }
-
 }
