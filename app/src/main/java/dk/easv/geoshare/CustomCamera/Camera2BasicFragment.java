@@ -29,6 +29,10 @@ import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -49,6 +53,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -58,6 +63,7 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -75,7 +81,7 @@ import java.util.concurrent.TimeUnit;
 import dk.easv.geoshare.R;
 
 public class Camera2BasicFragment extends Fragment
-        implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback, WritingInfoCallback {
+        implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback, WritingInfoCallback, SensorEventListener {
 
     /**
      * Conversion from screen rotation to JPEG orientation.
@@ -91,6 +97,8 @@ public class Camera2BasicFragment extends Fragment
         ORIENTATIONS.append(Surface.ROTATION_180, 270);
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
+
+    private Sensor mRotationSensor;
 
     private boolean writeDone = false;
 
@@ -288,6 +296,8 @@ public class Camera2BasicFragment extends Fragment
      */
     private int mSensorOrientation;
 
+    private ImageView mTakePictureButton;
+
     /**
      * A {@link CameraCaptureSession.CaptureCallback} that handles events related to JPEG capture.
      */
@@ -458,7 +468,16 @@ public class Camera2BasicFragment extends Fragment
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         view.findViewById(R.id.picture).setOnClickListener(this);
+        mTakePictureButton = view.findViewById(R.id.picture);
         mTextureView = (AutoFitTextureView) view.findViewById(R.id.texture);
+        int SENSOR_DELAY = 500 * 1000; // 500ms
+        try {
+            SensorManager mSensorManager = (SensorManager) getActivity().getSystemService(Activity.SENSOR_SERVICE);
+            mRotationSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+            mSensorManager.registerListener(this, mRotationSensor, SENSOR_DELAY);
+        } catch (Exception e) {
+            Toast.makeText(getActivity(), "Hardware compatibility issue", Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
@@ -950,8 +969,80 @@ public class Camera2BasicFragment extends Fragment
     }
 
     @Override
+    public void onInflate(Context context, AttributeSet attrs, Bundle savedInstanceState) {
+        super.onInflate(context, attrs, savedInstanceState);
+    }
+
+
+
+    @Override
     public void writeDone() {
         this.writeDone = true;
+    }
+
+    /**
+     * Called when there is a new sensor event.  Note that "on changed"
+     * is somewhat of a misnomer, as this will also be called if we have a
+     * new reading from a sensor with the exact same sensor values (but a
+     * newer timestamp).
+     *
+     * <p>See {@link SensorManager SensorManager}
+     * for details on possible sensor types.
+     * <p>See also {@link SensorEvent SensorEvent}.
+     *
+     * <p><b>NOTE:</b> The application doesn't own the
+     * {@link SensorEvent event}
+     * object passed as a parameter and therefore cannot hold on to it.
+     * The object may be part of an internal pool and may be reused by
+     * the framework.
+     *
+     * @param event the {@link SensorEvent SensorEvent}.
+     */
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor == mRotationSensor) {
+            if (event.values.length > 4) {
+                float[] truncatedRotationVector = new float[4];
+                System.arraycopy(event.values, 0, truncatedRotationVector, 0, 4);
+                update(truncatedRotationVector);
+            } else {
+                update(event.values);
+            }
+        }
+    }
+
+
+    private void update(float[] vectors) {
+        int FROM_RADS_TO_DEGS = -57;
+        float[] rotationMatrix = new float[9];
+        SensorManager.getRotationMatrixFromVector(rotationMatrix, vectors);
+        int worldAxisX = SensorManager.AXIS_X;
+        int worldAxisZ = SensorManager.AXIS_Z;
+        float[] adjustedRotationMatrix = new float[9];
+        SensorManager.remapCoordinateSystem(rotationMatrix, worldAxisX, worldAxisZ, adjustedRotationMatrix);
+        float[] orientation = new float[3];
+        SensorManager.getOrientation(adjustedRotationMatrix, orientation);
+        float pitch = orientation[1] * FROM_RADS_TO_DEGS;
+        float roll = orientation[2] * FROM_RADS_TO_DEGS;
+        if (mTakePictureButton != null){
+            mTakePictureButton.setRotation(roll);
+        }
+    }
+
+    /**
+     * Called when the accuracy of the registered sensor has changed.  Unlike
+     * onSensorChanged(), this is only called when this accuracy value changes.
+     *
+     * <p>See the SENSOR_STATUS_* constants in
+     * {@link SensorManager SensorManager} for details.
+     *
+     * @param sensor
+     * @param accuracy The new accuracy of this sensor, one of
+     *                 {@code SensorManager.SENSOR_STATUS_*}
+     */
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
     }
 
     /**
