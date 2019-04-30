@@ -1,4 +1,4 @@
-package dk.easv.geoshare.model;
+package dk.easv.geoshare.model.Interface;
 
 import java.util.ArrayList;
 

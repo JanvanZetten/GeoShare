@@ -5,36 +5,43 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 
 import dk.easv.geoshare.BE.PhotoLocal;
 import dk.easv.geoshare.BE.PhotoMetaData;
 import dk.easv.geoshare.model.FireStoreHelper;
+import dk.easv.geoshare.model.Interface.StoreListener;
 import dk.easv.geoshare.model.MyLocationListener;
 import dk.easv.geoshare.model.ObservableArrayList;
 import dk.easv.geoshare.model.PictureHelper;
-import dk.easv.geoshare.model.StoreListener;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
     private File photofile;
     private final static int PHOTO_REQUEST_CODE = 101;
     private FireStoreHelper fireStoreHelper = new FireStoreHelper();
@@ -42,6 +49,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         askForPermissions();
@@ -120,7 +130,62 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng location = new LatLng(photoMeataData.getLat(), photoMeataData.getLng());
         MarkerOptions options = new MarkerOptions();
         options.position(location);
+        options.snippet(photoMeataData.getPhotoUrl());
+        options.title("test");
+
         googleMap.addMarker(options);
+
+        URL url = null;
+        try {
+            url = new URL(photoMeataData.getPhotoUrl());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+        final URL finalUrl = url;
+        googleMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+            @Override
+            public View getInfoWindow(Marker marker) {
+                return null;
+            }
+
+            @Override
+            public View getInfoContents(Marker marker) {
+                View v = getLayoutInflater().inflate(R.layout.information_window, null);
+
+                ImageView iv = v.findViewById(R.id.iV);
+
+                try {
+                    InputStream content = (InputStream) finalUrl.getContent();
+                    Drawable d = Drawable.createFromStream(content, "src");
+                    iv.setImageDrawable(d);
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                return v;
+            }
+        });
+
+        googleMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
+            @Override
+            public void onInfoWindowClick(Marker marker) {
+                Log.d("home", "image view onClick: ");
+
+                Intent intent = new Intent(MapsActivity.this, image_view.class);
+
+                intent.putExtra("url", finalUrl);
+
+                startActivity(intent);
+            }
+        });
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        return true;
     }
 
     @Override
