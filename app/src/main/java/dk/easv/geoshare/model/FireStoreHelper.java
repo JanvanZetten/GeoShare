@@ -68,6 +68,14 @@ public class FireStoreHelper {
         });
     }
 
+
+    //Adding to firebase
+
+    /**
+     * Adds the metadata to a firebase collection
+     *
+     * @param meta
+     */
     public void addPhotoMeta(PhotoMetaData meta) {
 
         final CollectionReference colRef = db.collection("photoMetaData");
@@ -96,6 +104,14 @@ public class FireStoreHelper {
     }
 
 
+    /**
+     * Uploads a file to firebase and adds the id of the photo to the metadata
+     * then gets the download url and adds that to the metadata
+     * then uploads the metadata with the method above
+     *
+     * @param file_
+     * @param metaData
+     */
     public void UploadPhoto(File file_, final PhotoMetaData metaData) {
 
         Uri file = Uri.fromFile(file_);
