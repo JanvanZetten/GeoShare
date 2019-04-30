@@ -3,6 +3,7 @@ package dk.easv.geoshare.model;
 import java.util.ArrayList;
 
 import dk.easv.geoshare.BE.PhotoMetaData;
+import dk.easv.geoshare.model.Interface.StoreListener;
 
 public class ObservableArrayList {
 
