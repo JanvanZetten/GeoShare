@@ -134,10 +134,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            double latitude = coordinates.latitude;
-            double longitude = coordinates.longitude;
 
-            fireStoreHelper.UploadPhoto(photofile, new PhotoMetaData(latitude, longitude, photofile.lastModified()));
+            fireStoreHelper.UploadPhoto(photofile, new PhotoMetaData(coordinates.latitude, coordinates.longitude, photofile.lastModified()));
             // TODO take photofile and the current location and upload it to firebase and put Photo on map
         }
     }
@@ -166,14 +164,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         String provider; // Which type of provider to use
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             provider = LocationManager.GPS_PROVIDER;
-        } else if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+        } else if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
             provider = LocationManager.NETWORK_PROVIDER;
         } else {
             throw new Exception("No provider enabled");
         }
         // Request single coordinate update, and save the location to curLocation.
         locationManager.requestSingleUpdate(provider, listener, null);
-        Location curLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        Location curLocation = locationManager.getLastKnownLocation(provider);
+
+        if (curLocation == null && provider == LocationManager.GPS_PROVIDER &&
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
+            curLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        }
+
         locationManager.removeUpdates(listener); // Remove update to ensure it's actually stopped.
         return new LatLng(curLocation.getLatitude(), curLocation.getLongitude());
     }

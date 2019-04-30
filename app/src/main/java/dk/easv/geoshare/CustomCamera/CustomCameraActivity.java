@@ -15,6 +15,7 @@ public class CustomCameraActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.custom_camera);
         File outputFile = (File)getIntent().getSerializableExtra(MediaStore.EXTRA_OUTPUT);
         if (null == savedInstanceState) {
