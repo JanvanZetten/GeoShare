@@ -22,6 +22,7 @@ import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,13 +55,16 @@ public class FireStoreHelper {
 
                 for (QueryDocumentSnapshot snapShot : snapshots) {
                     Map<String, Object> data = snapShot.getData();
-                    PhotoMetaData photoMetaData = new PhotoMetaData(
-                            (Double) data.get("lat")
-                            , (Double) data.get("lng")
-                            , (long) data.get("timestamp"));
-                    photoMetaData.setPhotoID(data.get("photoId").toString());
-                    photoMetaData.setPhotoUrl(data.get("photoUrl").toString());
-                    photoMetaDataArrayList.add(photoMetaData);
+
+                    if ((long) data.get("timestamp") - new Date().getTime() < 86400000) {
+                        PhotoMetaData photoMetaData = new PhotoMetaData(
+                                (Double) data.get("lat")
+                                , (Double) data.get("lng")
+                                , (long) data.get("timestamp"));
+                        photoMetaData.setPhotoID(data.get("photoId").toString());
+                        photoMetaData.setPhotoUrl(data.get("photoUrl").toString());
+                        photoMetaDataArrayList.add(photoMetaData);
+                    }
                 }
 
                 ObservableArrayList.setPhotoMetaDataArrayList(photoMetaDataArrayList);
