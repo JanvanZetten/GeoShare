@@ -1022,10 +1022,22 @@ public class Camera2BasicFragment extends Fragment
         SensorManager.remapCoordinateSystem(rotationMatrix, worldAxisX, worldAxisZ, adjustedRotationMatrix);
         float[] orientation = new float[3];
         SensorManager.getOrientation(adjustedRotationMatrix, orientation);
-        float pitch = orientation[1] * FROM_RADS_TO_DEGS;
         float roll = orientation[2] * FROM_RADS_TO_DEGS;
+        setButtonRotation(roll);
+    }
+
+    private void setButtonRotation(float roll){
         if (mTakePictureButton != null){
-            mTakePictureButton.setRotation(roll);
+            if (roll < 45 && roll > -45){
+                mTakePictureButton.setRotation(0);
+            }else if (roll < 135 && roll > 45){
+                mTakePictureButton.setRotation(90);
+            }else if (roll > 135 || roll < -135){
+                mTakePictureButton.setRotation(180);
+            }
+            else if (roll > -135 && roll < -45){
+                mTakePictureButton.setRotation(270);
+            }
         }
     }
 
