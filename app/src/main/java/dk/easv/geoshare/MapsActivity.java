@@ -53,19 +53,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         fireStoreHelper = new FireStoreHelper();
         fireStoreHelper.getPhotoMeta();
 
-        ObservableArrayList.addOnDataLoadedListener(new StoreListener() {
-            @Override
-            public void onDataLoaded(ArrayList<PhotoMetaData> photoMetaDataArrayList) {
-                Log.d("FireStor", "onCreate: " + photoMetaDataArrayList.size());
-            }
-        });
-
-
         final PictureHelper pictureHelper = new PictureHelper(this);
         findViewById(R.id.btnPicture).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(!askForPermissions()) return;
+                if (!askForPermissions()) return;
                 photofile = pictureHelper.takePicture(PHOTO_REQUEST_CODE);
             }
         });
@@ -75,6 +67,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Asks for the required permissions needed to use the application.
      * If one or more permissions are not granted, this method returns false.
      * If all permissions are granted, this method returns true.
+     *
      * @return boolean, false if permissions are missing, true if all are given.
      */
     private boolean askForPermissions() {
@@ -85,7 +78,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             permissions.add(Manifest.permission.CAMERA);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
             permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
-        if (permissions.size() > 0){
+        if (permissions.size() > 0) {
             Toast.makeText(this, "To use this application, you must accept the following permissions.", Toast.LENGTH_LONG);
             ActivityCompat.requestPermissions((Activity) this, permissions.toArray(new String[]{}), 1);
             return false;
@@ -103,13 +96,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * installed Google Play services and returned to the app.
      */
     @Override
-    public void onMapReady(GoogleMap googleMap) {
+    public void onMapReady(final GoogleMap googleMap) {
         googleMap.getUiSettings().setZoomControlsEnabled(true);
 
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        googleMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        googleMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        ObservableArrayList.addOnDataLoadedListener(new StoreListener() {
+            @Override
+            public void onDataLoaded(ArrayList<PhotoMetaData> photoMetaDataArrayList) {
+                Log.d("FireStor", "onCreate: " + photoMetaDataArrayList.size());
+                for (PhotoMetaData photoMeataData : photoMetaDataArrayList) {
+                    makeMarker(googleMap, photoMeataData);
+                }
+            }
+        });
+    }
+
+    /**
+     * Adds a marker to googleMap from the photoMetaData
+     *
+     * @param googleMap
+     * @param photoMeataData
+     */
+    private void makeMarker(GoogleMap googleMap, PhotoMetaData photoMeataData) {
+        LatLng location = new LatLng(photoMeataData.getLat(), photoMeataData.getLng());
+        MarkerOptions options = new MarkerOptions();
+        options.position(location);
+        googleMap.addMarker(options);
     }
 
     @Override
@@ -134,6 +145,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     /**
      * Gets the devices current coordinates as lat lng.
      * Creates a locationManager, gets
+     *
      * @return LatLng
      * @throws Exception
      */
@@ -148,13 +160,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             askForPermissions(); // This should NEVER be reachable as
-                                 // permissions must be granted earlier
+            // permissions must be granted earlier
         }
 
         String provider; // Which type of provider to use
-        if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             provider = LocationManager.GPS_PROVIDER;
-        } else if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+        } else if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             provider = LocationManager.NETWORK_PROVIDER;
         } else {
             throw new Exception("No provider enabled");
