@@ -22,7 +22,6 @@ import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,8 +54,7 @@ public class FireStoreHelper {
 
                 for (QueryDocumentSnapshot snapShot : snapshots) {
                     Map<String, Object> data = snapShot.getData();
-
-                    if ((long) data.get("timestamp") - new Date().getTime() < 86400000) {
+                    if ((System.currentTimeMillis() - (long) data.get("timestamp")) < 86400000) {
                         PhotoMetaData photoMetaData = new PhotoMetaData(
                                 (Double) data.get("lat")
                                 , (Double) data.get("lng")
