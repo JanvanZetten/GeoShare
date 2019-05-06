@@ -13,4 +13,5 @@
         android:scaleType="centerInside"
         android:adjustViewBounds="true"
         tools:srcCompat="@tools:sample/backgrounds/scenic" />
+
 </LinearLayout>

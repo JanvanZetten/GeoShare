@@ -54,13 +54,15 @@ public class FireStoreHelper {
 
                 for (QueryDocumentSnapshot snapShot : snapshots) {
                     Map<String, Object> data = snapShot.getData();
-                    PhotoMetaData photoMetaData = new PhotoMetaData(
-                            (Double) data.get("lat")
-                            , (Double) data.get("lng")
-                            , (long) data.get("timestamp"));
-                    photoMetaData.setPhotoID(data.get("photoId").toString());
-                    photoMetaData.setPhotoUrl(data.get("photoUrl").toString());
-                    photoMetaDataArrayList.add(photoMetaData);
+                    if ((System.currentTimeMillis() - (long) data.get("timestamp")) < 86400000) {
+                        PhotoMetaData photoMetaData = new PhotoMetaData(
+                                (Double) data.get("lat")
+                                , (Double) data.get("lng")
+                                , (long) data.get("timestamp"));
+                        photoMetaData.setPhotoID(data.get("photoId").toString());
+                        photoMetaData.setPhotoUrl(data.get("photoUrl").toString());
+                        photoMetaDataArrayList.add(photoMetaData);
+                    }
                 }
 
                 ObservableArrayList.setPhotoMetaDataArrayList(photoMetaDataArrayList);
