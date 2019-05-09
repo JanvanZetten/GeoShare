@@ -39,7 +39,11 @@ public class FireStoreHelper {
     private StorageReference storageRef = storage.getReference();
 
     final ArrayList<PhotoMetaData> photoMetaDataArrayList = new ArrayList<>();
+    public final static long MILLIS_PER_DAY = 24 * 60 * 60 * 1000L;
 
+    /**
+     * gets all the documents from the phoneMetaData collection
+     */
     public void getPhotoMeta() {
         final CollectionReference colRef = db.collection("photoMetaData");
         colRef.addSnapshotListener(new EventListener<QuerySnapshot>() {
@@ -54,7 +58,8 @@ public class FireStoreHelper {
 
                 for (QueryDocumentSnapshot snapShot : snapshots) {
                     Map<String, Object> data = snapShot.getData();
-                    if ((System.currentTimeMillis() - (long) data.get("timestamp")) < 86400000) {
+                    long dayBefore = System.currentTimeMillis() - MILLIS_PER_DAY;
+                    if ((long) data.get("timestamp") > dayBefore) {
                         PhotoMetaData photoMetaData = new PhotoMetaData(
                                 (Double) data.get("lat")
                                 , (Double) data.get("lng")

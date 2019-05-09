@@ -41,7 +41,7 @@ import dk.easv.geoshare.model.MyLocationListener;
 import dk.easv.geoshare.model.ObservableArrayList;
 import dk.easv.geoshare.model.PictureHelper;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
     private File photofile;
     private final static int PHOTO_REQUEST_CODE = 101;
     private FireStoreHelper fireStoreHelper = new FireStoreHelper();
@@ -112,9 +112,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         ObservableArrayList.addOnDataLoadedListener(new StoreListener() {
             @Override
             public void onDataLoaded(ArrayList<PhotoMetaData> photoMetaDataArrayList) {
-                Log.d("FireStor", "onCreate: " + photoMetaDataArrayList.size());
-                for (PhotoMetaData photoMeataData : photoMetaDataArrayList) {
-                    makeMarker(googleMap, photoMeataData);
+                googleMap.clear();
+                for (PhotoMetaData photoMetaData : photoMetaDataArrayList) {
+                    makeMarker(googleMap, photoMetaData);
                 }
             }
         });
@@ -164,7 +164,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
                 return v;
             }
         });
@@ -181,11 +180,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 startActivity(intent);
             }
         });
-    }
-
-    @Override
-    public boolean onMarkerClick(Marker marker) {
-        return true;
     }
 
     @Override
