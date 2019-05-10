@@ -69,15 +69,23 @@ public class Camera2BasicFragment
             SensorEventListener {
 
 //region Instance variables
-    /**
-     * Conversion from screen rotation to JPEG orientation.
-     */
-    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+    //region Static variables
 
     private static final int REQUEST_CAMERA_PERMISSION = 1;
     private static final String FRAGMENT_DIALOG = "dialog";
     private static final String OUTPUT_FILE_STATE_KEY = "outputFile";
+    private static final String TAG = "CustomCamera";
 
+    /**
+     * Max preview width and height that is guaranteed by Camera2 API
+     */
+    private static final int MAX_PREVIEW_WIDTH = 1920;
+    private static final int MAX_PREVIEW_HEIGHT = 1080;
+
+    /**
+     * Conversion from screen rotation to JPEG orientation.
+     */
+    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
         ORIENTATIONS.append(Surface.ROTATION_90, 0);
@@ -85,20 +93,8 @@ public class Camera2BasicFragment
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
 
-    /**
-     * Tag for the {@link Log}.
-     */
-    private static final String TAG = "CustomCamera";
+    //endregion
 
-    /**
-     * Max preview width that is guaranteed by Camera2 API
-     */
-    private static final int MAX_PREVIEW_WIDTH = 1920;
-
-    /**
-     * Max preview height that is guaranteed by Camera2 API
-     */
-    private static final int MAX_PREVIEW_HEIGHT = 1080;
 
     private Sensor mRotationSensor;
 
@@ -279,7 +275,7 @@ public class Camera2BasicFragment
                 }
                 case STATE_WAITING_LOCK: {
                     Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
-                    // the inactive is to make the emulators work because the virtual scene does not have autofocus
+                    // The inactive is to make the emulators work because the virtual scene camera does not have Autofocus
                     if (afState == null || afState == CaptureResult.CONTROL_AF_STATE_INACTIVE) {
                         captureStillPicture();
                     } else if (CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED == afState ||
@@ -331,8 +327,15 @@ public class Camera2BasicFragment
                                        @NonNull TotalCaptureResult result) {
             process(result);
         }
-
     };
+//endregion
+
+//region Initializer
+    public static Camera2BasicFragment newInstance(File outputFile) {
+        Camera2BasicFragment instance = new Camera2BasicFragment();
+        instance.mFile = outputFile;
+        return instance;
+    }
 //endregion
 
 //region Override methods
@@ -343,8 +346,10 @@ public class Camera2BasicFragment
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(
+            LayoutInflater inflater,
+            ViewGroup container,
+            Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_camera, container, false);
     }
 
@@ -352,7 +357,7 @@ public class Camera2BasicFragment
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         view.findViewById(R.id.picture).setOnClickListener(this);
         mTakePictureButton = view.findViewById(R.id.picture);
-        mTextureView = (AutoFitTextureView) view.findViewById(R.id.texture);
+        mTextureView = view.findViewById(R.id.texture);
         int SENSOR_DELAY = 500 * 1000; // 500ms
         try {
             SensorManager mSensorManager = (SensorManager) getActivity().getSystemService(Activity.SENSOR_SERVICE);
@@ -430,21 +435,7 @@ public class Camera2BasicFragment
     }
 
     /**
-     * Called when there is a new sensor event.  Note that "on changed"
-     * is somewhat of a misnomer, as this will also be called if we have a
-     * new reading from a sensor with the exact same sensor values (but a
-     * newer timestamp).
-     *
-     * <p>See {@link SensorManager SensorManager}
-     * for details on possible sensor types.
-     * <p>See also {@link SensorEvent SensorEvent}.
-     *
-     * <p><b>NOTE:</b> The application doesn't own the
-     * {@link SensorEvent event}
-     * object passed as a parameter and therefore cannot hold on to it.
-     * The object may be part of an internal pool and may be reused by
-     * the framework.
-     *
+     * Called when there is a new sensor event.
      * @param event the {@link SensorEvent SensorEvent}.
      */
     @Override
@@ -461,41 +452,11 @@ public class Camera2BasicFragment
     }
 
     /**
-     * Called when the accuracy of the registered sensor has changed.  Unlike
-     * onSensorChanged(), this is only called when this accuracy value changes.
-     *
-     * <p>See the SENSOR_STATUS_* constants in
-     * {@link SensorManager SensorManager} for details.
-     *
-     * @param sensor
-     * @param accuracy The new accuracy of this sensor, one of
-     *                 {@code SensorManager.SENSOR_STATUS_*}
+     * Called when the accuracy of the registered sensor has changed.
      */
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        // does not really matter, but part of the implemented interface SensorEventListener
-    }
-
-//endregion
-
-//region Public methods (non-override)
-    /**
-     * Set the Arguments for the fragment
-     * @param outputFile
-     */
-    public void setArguments(File outputFile){
-        this.mFile = outputFile;
-    }
-
-    public static Camera2BasicFragment newInstance() {
-        Camera2BasicFragment instance = new Camera2BasicFragment();
-        return instance;
-    }
-
-    public static Camera2BasicFragment newInstance(File outputFile) {
-        Camera2BasicFragment instance = new Camera2BasicFragment();
-        instance.setArguments(outputFile);
-        return instance;
+        //Not used, but part of the implemented interface SensorEventListener
     }
 
 //endregion
@@ -503,7 +464,6 @@ public class Camera2BasicFragment
 //region Private methods
     /**
      * Shows a {@link Toast} on the UI thread.
-     *
      * @param text The message to show
      */
     private void showToast(final String text) {
