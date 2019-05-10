@@ -68,10 +68,12 @@ public class Camera2BasicFragment
             WritingInfoCallback,
             SensorEventListener {
 
+//region Instance variables
     /**
      * Conversion from screen rotation to JPEG orientation.
      */
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+
     private static final int REQUEST_CAMERA_PERMISSION = 1;
     private static final String FRAGMENT_DIALOG = "dialog";
     private static final String OUTPUT_FILE_STATE_KEY = "outputFile";
@@ -82,10 +84,6 @@ public class Camera2BasicFragment
         ORIENTATIONS.append(Surface.ROTATION_180, 270);
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
-
-    private Sensor mRotationSensor;
-
-    private boolean writeDone = false;
 
     /**
      * Tag for the {@link Log}.
@@ -101,6 +99,10 @@ public class Camera2BasicFragment
      * Max preview height that is guaranteed by Camera2 API
      */
     private static final int MAX_PREVIEW_HEIGHT = 1080;
+
+    private Sensor mRotationSensor;
+
+    private boolean writeDone = false;
 
     /**
      * ID of the current {@link CameraDevice}.
@@ -150,34 +152,6 @@ public class Camera2BasicFragment
     private WritingInfoCallback writingInfoCallback = this;
 
     /**
-     * {@link TextureView.SurfaceTextureListener} handles several lifecycle events on a
-     * {@link TextureView}.
-     */
-    private final TextureView.SurfaceTextureListener mSurfaceTextureListener
-            = new TextureView.SurfaceTextureListener() {
-
-        @Override
-        public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
-            openCamera(width, height);
-        }
-
-        @Override
-        public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
-            configureTransform(width, height);
-        }
-
-        @Override
-        public boolean onSurfaceTextureDestroyed(SurfaceTexture texture) {
-            return true;
-        }
-
-        @Override
-        public void onSurfaceTextureUpdated(SurfaceTexture texture) {
-        }
-
-    };
-
-    /**
      * {@link CaptureRequest.Builder} for the camera preview
      */
     private CaptureRequest.Builder mPreviewRequestBuilder;
@@ -209,8 +183,40 @@ public class Camera2BasicFragment
      */
     private int mSensorOrientation;
 
+    /**
+     * The button for taking a picture
+     */
     private ImageView mTakePictureButton;
+//endregion
 
+//region Callbacks
+    /**
+     * {@link TextureView.SurfaceTextureListener} handles several lifecycle events on a
+     * {@link TextureView}.
+     */
+    private final TextureView.SurfaceTextureListener mSurfaceTextureListener
+            = new TextureView.SurfaceTextureListener() {
+
+        @Override
+        public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
+            openCamera(width, height);
+        }
+
+        @Override
+        public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
+            configureTransform(width, height);
+        }
+
+        @Override
+        public boolean onSurfaceTextureDestroyed(SurfaceTexture texture) {
+            return true;
+        }
+
+        @Override
+        public void onSurfaceTextureUpdated(SurfaceTexture texture) {
+        }
+
+    };
 
     /**
      * {@link CameraDevice.StateCallback} is called when {@link CameraDevice} changes its state.
@@ -312,8 +318,6 @@ public class Camera2BasicFragment
             }
         }
 
-
-
         @Override
         public void onCaptureProgressed(@NonNull CameraCaptureSession session,
                                         @NonNull CaptureRequest request,
@@ -329,13 +333,152 @@ public class Camera2BasicFragment
         }
 
     };
+//endregion
 
+//region Override methods
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putSerializable(OUTPUT_FILE_STATE_KEY, mFile);
     }
 
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_camera, container, false);
+    }
+
+    @Override
+    public void onViewCreated(final View view, Bundle savedInstanceState) {
+        view.findViewById(R.id.picture).setOnClickListener(this);
+        mTakePictureButton = view.findViewById(R.id.picture);
+        mTextureView = (AutoFitTextureView) view.findViewById(R.id.texture);
+        int SENSOR_DELAY = 500 * 1000; // 500ms
+        try {
+            SensorManager mSensorManager = (SensorManager) getActivity().getSystemService(Activity.SENSOR_SERVICE);
+            mRotationSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+            mSensorManager.registerListener(this, mRotationSensor, SENSOR_DELAY);
+        } catch (Exception e) {
+            Toast.makeText(getActivity(), "Hardware compatibility issue", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        if(savedInstanceState != null){
+            this.mFile = (File)savedInstanceState.getSerializable(OUTPUT_FILE_STATE_KEY);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        startBackgroundThread();
+
+        // When the screen is turned off and turned back on, the SurfaceTexture is already
+        // available, and "onSurfaceTextureAvailable" will not be called. In that case, we can open
+        // a camera and start preview from here (otherwise, we wait until the surface is ready in
+        // the SurfaceTextureListener).
+        if (mTextureView.isAvailable()) {
+            openCamera(mTextureView.getWidth(), mTextureView.getHeight());
+        } else {
+            mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
+        }
+    }
+
+    @Override
+    public void onPause() {
+        closeCamera();
+        stopBackgroundThread();
+        super.onPause();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode,
+            @NonNull String[] permissions,
+            @NonNull int[] grantResults) {
+        if (requestCode == REQUEST_CAMERA_PERMISSION) {
+            if (grantResults.length != 1 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                ErrorDialog.newInstance(getString(R.string.request_permission))
+                        .show(getChildFragmentManager(), FRAGMENT_DIALOG);
+            }
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.picture: {
+                takePicture();
+                break;
+            }
+        }
+    }
+
+    @Override
+    public void onInflate(Context context, AttributeSet attrs, Bundle savedInstanceState) {
+        super.onInflate(context, attrs, savedInstanceState);
+    }
+
+    @Override
+    public void writeDone() {
+        this.writeDone = true;
+    }
+
+    /**
+     * Called when there is a new sensor event.  Note that "on changed"
+     * is somewhat of a misnomer, as this will also be called if we have a
+     * new reading from a sensor with the exact same sensor values (but a
+     * newer timestamp).
+     *
+     * <p>See {@link SensorManager SensorManager}
+     * for details on possible sensor types.
+     * <p>See also {@link SensorEvent SensorEvent}.
+     *
+     * <p><b>NOTE:</b> The application doesn't own the
+     * {@link SensorEvent event}
+     * object passed as a parameter and therefore cannot hold on to it.
+     * The object may be part of an internal pool and may be reused by
+     * the framework.
+     *
+     * @param event the {@link SensorEvent SensorEvent}.
+     */
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor == mRotationSensor) {
+            if (event.values.length > 4) {
+                float[] truncatedRotationVector = new float[4];
+                System.arraycopy(event.values, 0, truncatedRotationVector, 0, 4);
+                updateRotation(truncatedRotationVector);
+            } else {
+                updateRotation(event.values);
+            }
+        }
+    }
+
+    /**
+     * Called when the accuracy of the registered sensor has changed.  Unlike
+     * onSensorChanged(), this is only called when this accuracy value changes.
+     *
+     * <p>See the SENSOR_STATUS_* constants in
+     * {@link SensorManager SensorManager} for details.
+     *
+     * @param sensor
+     * @param accuracy The new accuracy of this sensor, one of
+     *                 {@code SensorManager.SENSOR_STATUS_*}
+     */
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        // does not really matter, but part of the implemented interface SensorEventListener
+    }
+
+//endregion
+
+//region Public methods (non-override)
     /**
      * Set the Arguments for the fragment
      * @param outputFile
@@ -344,6 +487,20 @@ public class Camera2BasicFragment
         this.mFile = outputFile;
     }
 
+    public static Camera2BasicFragment newInstance() {
+        Camera2BasicFragment instance = new Camera2BasicFragment();
+        return instance;
+    }
+
+    public static Camera2BasicFragment newInstance(File outputFile) {
+        Camera2BasicFragment instance = new Camera2BasicFragment();
+        instance.setArguments(outputFile);
+        return instance;
+    }
+
+//endregion
+
+//region Private methods
     /**
      * Shows a {@link Toast} on the UI thread.
      *
@@ -410,89 +567,11 @@ public class Camera2BasicFragment
         }
     }
 
-    public static Camera2BasicFragment newInstance() {
-        Camera2BasicFragment instance = new Camera2BasicFragment();
-        return instance;
-    }
-
-    public static Camera2BasicFragment newInstance(File outputFile) {
-        Camera2BasicFragment instance = new Camera2BasicFragment();
-        instance.setArguments(outputFile);
-        return instance;
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_camera, container, false);
-    }
-
-    @Override
-    public void onViewCreated(final View view, Bundle savedInstanceState) {
-        view.findViewById(R.id.picture).setOnClickListener(this);
-        mTakePictureButton = view.findViewById(R.id.picture);
-        mTextureView = (AutoFitTextureView) view.findViewById(R.id.texture);
-        int SENSOR_DELAY = 500 * 1000; // 500ms
-        try {
-            SensorManager mSensorManager = (SensorManager) getActivity().getSystemService(Activity.SENSOR_SERVICE);
-            mRotationSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
-            mSensorManager.registerListener(this, mRotationSensor, SENSOR_DELAY);
-        } catch (Exception e) {
-            Toast.makeText(getActivity(), "Hardware compatibility issue", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        if(savedInstanceState != null){
-            this.mFile = (File)savedInstanceState.getSerializable(OUTPUT_FILE_STATE_KEY);
-        }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        startBackgroundThread();
-
-        // When the screen is turned off and turned back on, the SurfaceTexture is already
-        // available, and "onSurfaceTextureAvailable" will not be called. In that case, we can open
-        // a camera and start preview from here (otherwise, we wait until the surface is ready in
-        // the SurfaceTextureListener).
-        if (mTextureView.isAvailable()) {
-            openCamera(mTextureView.getWidth(), mTextureView.getHeight());
-        } else {
-            mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
-        }
-    }
-
-    @Override
-    public void onPause() {
-        closeCamera();
-        stopBackgroundThread();
-        super.onPause();
-    }
-
     private void requestCameraPermission() {
         if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
             new ConfirmationDialog().show(getChildFragmentManager(), FRAGMENT_DIALOG);
         } else {
             requestPermissions(new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(
-            int requestCode,
-            @NonNull String[] permissions,
-            @NonNull int[] grantResults) {
-        if (requestCode == REQUEST_CAMERA_PERMISSION) {
-            if (grantResults.length != 1 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                ErrorDialog.newInstance(getString(R.string.request_permission))
-                        .show(getChildFragmentManager(), FRAGMENT_DIALOG);
-            }
-        } else {
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
 
@@ -914,66 +993,12 @@ public class Camera2BasicFragment
         }
     }
 
-    @Override
-    public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.picture: {
-                takePicture();
-                break;
-            }
-        }
-    }
-
     private void setAutoFlash(CaptureRequest.Builder requestBuilder) {
         if (mFlashSupported) {
             requestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
                     CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
         }
     }
-
-    @Override
-    public void onInflate(Context context, AttributeSet attrs, Bundle savedInstanceState) {
-        super.onInflate(context, attrs, savedInstanceState);
-    }
-
-
-
-    @Override
-    public void writeDone() {
-        this.writeDone = true;
-    }
-
-    /**
-     * Called when there is a new sensor event.  Note that "on changed"
-     * is somewhat of a misnomer, as this will also be called if we have a
-     * new reading from a sensor with the exact same sensor values (but a
-     * newer timestamp).
-     *
-     * <p>See {@link SensorManager SensorManager}
-     * for details on possible sensor types.
-     * <p>See also {@link SensorEvent SensorEvent}.
-     *
-     * <p><b>NOTE:</b> The application doesn't own the
-     * {@link SensorEvent event}
-     * object passed as a parameter and therefore cannot hold on to it.
-     * The object may be part of an internal pool and may be reused by
-     * the framework.
-     *
-     * @param event the {@link SensorEvent SensorEvent}.
-     */
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        if (event.sensor == mRotationSensor) {
-            if (event.values.length > 4) {
-                float[] truncatedRotationVector = new float[4];
-                System.arraycopy(event.values, 0, truncatedRotationVector, 0, 4);
-                updateRotation(truncatedRotationVector);
-            } else {
-                updateRotation(event.values);
-            }
-        }
-    }
-
 
     private void updateRotation(float[] vectors) {
         int FROM_RADS_TO_DEGS = -57;
@@ -1004,19 +1029,5 @@ public class Camera2BasicFragment
         }
     }
 
-    /**
-     * Called when the accuracy of the registered sensor has changed.  Unlike
-     * onSensorChanged(), this is only called when this accuracy value changes.
-     *
-     * <p>See the SENSOR_STATUS_* constants in
-     * {@link SensorManager SensorManager} for details.
-     *
-     * @param sensor
-     * @param accuracy The new accuracy of this sensor, one of
-     *                 {@code SensorManager.SENSOR_STATUS_*}
-     */
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        // does not really matter, but part of the implemented interface
-    }
+    //endregion
 }
