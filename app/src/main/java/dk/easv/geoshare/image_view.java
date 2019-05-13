@@ -19,7 +19,12 @@ public class image_view extends AppCompatActivity {
 
         ImageView iv = findViewById(R.id.i_v);
 
-        URL url = (URL) getIntent().getSerializableExtra("url");
+        URL url = null;
+        try {
+            url = new URL((String) getIntent().getSerializableExtra("url"));
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
 
         try {
             InputStream content = (InputStream) url.getContent();

@@ -135,14 +135,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         googleMap.addMarker(options);
 
-        URL url = null;
-        try {
-            url = new URL(photoMeataData.getPhotoUrl());
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-
-        final URL finalUrl = url;
         googleMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
             @Override
             public View getInfoWindow(Marker marker) {
@@ -156,7 +148,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 ImageView iv = v.findViewById(R.id.iV);
 
                 try {
-                    InputStream content = (InputStream) finalUrl.getContent();
+                    InputStream content = (InputStream) new URL(marker.getSnippet()).getContent();
                     Drawable d = Drawable.createFromStream(content, "src");
                     iv.setImageDrawable(d);
                 } catch (MalformedURLException e) {
@@ -175,7 +167,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 Intent intent = new Intent(MapsActivity.this, image_view.class);
 
-                intent.putExtra("url", finalUrl);
+                intent.putExtra("url", marker.getSnippet());
 
                 startActivity(intent);
             }
