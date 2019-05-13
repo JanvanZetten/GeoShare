@@ -35,6 +35,7 @@ import java.util.ArrayList;
 
 import dk.easv.geoshare.BE.PhotoLocal;
 import dk.easv.geoshare.BE.PhotoMetaData;
+import dk.easv.geoshare.model.Adapter.InfoWindowAdapter;
 import dk.easv.geoshare.model.FireStoreHelper;
 import dk.easv.geoshare.model.Interface.StoreListener;
 import dk.easv.geoshare.model.MyLocationListener;
@@ -135,38 +136,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         googleMap.addMarker(options);
 
-        URL url = null;
-        try {
-            url = new URL(photoMeataData.getPhotoUrl());
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
+        googleMap.setInfoWindowAdapter(new InfoWindowAdapter(this));
 
-        final URL finalUrl = url;
-        googleMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
-            @Override
-            public View getInfoWindow(Marker marker) {
-                return null;
-            }
-
-            @Override
-            public View getInfoContents(Marker marker) {
-                View v = getLayoutInflater().inflate(R.layout.information_window, null);
-
-                ImageView iv = v.findViewById(R.id.iV);
-
-                try {
-                    InputStream content = (InputStream) finalUrl.getContent();
-                    Drawable d = Drawable.createFromStream(content, "src");
-                    iv.setImageDrawable(d);
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                return v;
-            }
-        });
+//        googleMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+//            @Override
+//            public View getInfoWindow(Marker marker) {
+//                return null;
+//            }
+//
+//            @Override
+//            public View getInfoContents(Marker marker) {
+//                View v = getLayoutInflater().inflate(R.layout.information_window, null);
+//
+//                ImageView iv = new ImageView(v.getContext());
+//
+//                try {
+//                    InputStream content = (InputStream) finalUrl.getContent();
+//                    Drawable d = Drawable.createFromStream(content, "src");
+//                    iv.setImageDrawable(d);
+//                } catch (MalformedURLException e) {
+//                    e.printStackTrace();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//
+//                return v;
+//            }
+//        });
 
         googleMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
@@ -175,7 +171,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 Intent intent = new Intent(MapsActivity.this, image_view.class);
 
-                intent.putExtra("url", finalUrl);
+                intent.putExtra("url", marker.getSnippet());
 
                 startActivity(intent);
             }
@@ -233,7 +229,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Location curLocation = locationManager.getLastKnownLocation(provider);
 
         if (curLocation == null && provider == LocationManager.GPS_PROVIDER &&
-                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
             curLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         }
 
