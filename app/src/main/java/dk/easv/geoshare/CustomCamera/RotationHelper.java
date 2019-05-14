@@ -7,7 +7,6 @@ import android.hardware.SensorManager;
 import android.view.View;
 
 public class RotationHelper implements SensorEventListener {
-    private static int SENSOR_DELAY = 500 * 1000; // 500ms
     private View[] rotatingViews;
     private int currentRotation;
     private Sensor mRotationSensor;
@@ -15,7 +14,7 @@ public class RotationHelper implements SensorEventListener {
     public RotationHelper(View[] viewsToRotate, SensorManager sensorManager) {
         this.rotatingViews = viewsToRotate;
         mRotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
-        sensorManager.registerListener(this, mRotationSensor, SENSOR_DELAY);
+        sensorManager.registerListener(this, mRotationSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     /**
