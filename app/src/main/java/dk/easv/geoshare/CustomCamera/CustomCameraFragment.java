@@ -55,7 +55,7 @@ import java.util.concurrent.TimeUnit;
 
 import dk.easv.geoshare.R;
 
-public class Camera2BasicFragment
+public class CustomCameraFragment
         extends
             Fragment
         implements
@@ -319,8 +319,8 @@ public class Camera2BasicFragment
 //endregion
 
 //region Initializer
-    public static Camera2BasicFragment newInstance(File outputFile) {
-        Camera2BasicFragment instance = new Camera2BasicFragment();
+    public static CustomCameraFragment newInstance(File outputFile) {
+        CustomCameraFragment instance = new CustomCameraFragment();
         instance.mFile = outputFile;
         return instance;
     }
@@ -614,7 +614,7 @@ public class Camera2BasicFragment
     }
 
     /**
-     * Opens the camera specified by {@link Camera2BasicFragment#mCameraId}.
+     * Opens the camera specified by {@link CustomCameraFragment#mCameraId}.
      */
     private void openCamera(int width, int height) {
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
@@ -862,7 +862,7 @@ public class Camera2BasicFragment
                             break;
                         }else{
                             try {
-                                Log.e("Camera2BasicFragment", "Waiting for 10 ms because the file isn't ready yet");
+                                Log.e(TAG, "Waiting for 10 ms because the file isn't ready yet");
                                 wait(10);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();

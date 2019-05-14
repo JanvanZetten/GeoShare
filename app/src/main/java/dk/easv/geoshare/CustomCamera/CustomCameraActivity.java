@@ -1,6 +1,5 @@
 package dk.easv.geoshare.CustomCamera;
 
-import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
@@ -20,7 +19,7 @@ public class CustomCameraActivity extends AppCompatActivity {
         File outputFile = (File)getIntent().getSerializableExtra(MediaStore.EXTRA_OUTPUT);
         if (null == savedInstanceState) {
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.container, Camera2BasicFragment.newInstance(outputFile))
+                    .replace(R.id.container, CustomCameraFragment.newInstance(outputFile))
                     .commit();
         }
     }
