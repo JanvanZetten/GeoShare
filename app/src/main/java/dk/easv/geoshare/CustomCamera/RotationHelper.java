@@ -23,20 +23,18 @@ public class RotationHelper implements SensorEventListener {
      * @return The JPEG orientation (one of 0, 90, 270, and 360)
      */
     public int getJPEGOrientation(int sensorOrientation) {
-        // Sensor orientation is 90 for most devices, or 270 for some devices (eg. Nexus 5X)
-        // We have to take that into account and rotate JPEG properly.
-        // For devices with orientation of 90, we simply return our mapping from ORIENTATIONS.
-        // For devices with orientation of 270, we need to rotate the JPEG 180 degrees.
+        // Sensor adjustedOrientation is 90 for most devices, or 270 for some devices (eg. Nexus 5X)
+        int adjustedOrientation = 0;
         if (currentRotation == 0){
-            currentRotation = 90;
+            adjustedOrientation = 90;
         } else if (currentRotation == 90){
-            currentRotation = 0;
+            adjustedOrientation = 0;
         } else if (currentRotation == 180){
-            currentRotation = 270;
+            adjustedOrientation = 270;
         } else if (currentRotation == 270){
-            currentRotation = 180;
+            adjustedOrientation = 180;
         }
-        return (currentRotation + sensorOrientation + 270) % 360;
+        return (adjustedOrientation + sensorOrientation + 270) % 360;
     }
 
     private void updateRotation(float[] vectors) {
