@@ -183,6 +183,11 @@ public class Camera2BasicFragment
      * The button for taking a picture
      */
     private ImageView mTakePictureButton;
+
+    /**
+     * The rotation of the device in 90 degree intervals ie 0, 90, 180 or 270
+     */
+    private int currentRotation;
 //endregion
 
 //region Callbacks
@@ -878,8 +883,7 @@ public class Camera2BasicFragment
             setAutoFlash(captureBuilder);
 
             // Orientation
-            int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
-            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(rotation));
+            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation());
 
             CameraCaptureSession.CaptureCallback CaptureCallback
                     = new CameraCaptureSession.CaptureCallback() {
@@ -920,16 +924,24 @@ public class Camera2BasicFragment
 
     /**
      * Retrieves the JPEG orientation from the specified screen rotation.
-     *
-     * @param rotation The screen rotation.
      * @return The JPEG orientation (one of 0, 90, 270, and 360)
      */
-    private int getOrientation(int rotation) {
+    private int getOrientation() {
         // Sensor orientation is 90 for most devices, or 270 for some devices (eg. Nexus 5X)
         // We have to take that into account and rotate JPEG properly.
         // For devices with orientation of 90, we simply return our mapping from ORIENTATIONS.
         // For devices with orientation of 270, we need to rotate the JPEG 180 degrees.
-        return (ORIENTATIONS.get(rotation) + mSensorOrientation + 270) % 360;
+        if (currentRotation == 0){
+            currentRotation = 90;
+        } else if (currentRotation == 90){
+            currentRotation = 0;
+        } else if (currentRotation == 180){
+            currentRotation = 270;
+        } else if (currentRotation == 270){
+            currentRotation = 180;
+        }
+
+        return (currentRotation + mSensorOrientation + 270) % 360; // not correct 90+0+270%360 = 360
     }
 
     /**
@@ -971,21 +983,26 @@ public class Camera2BasicFragment
         float[] orientation = new float[3];
         SensorManager.getOrientation(adjustedRotationMatrix, orientation);
         float roll = orientation[2] * FROM_RADS_TO_DEGS;
+        currentRotation = get90degreeIntervals(roll);
         setButtonRotation(roll);
+    }
+
+    private int get90degreeIntervals(float roll) {
+        if (roll < 45 && roll > -45){
+            return 0;
+        }else if (roll < 135 && roll > 45){
+            return 90;
+        }else if (roll > 135 || roll < -135){
+            return 180;
+        }else if (roll > -135 && roll < -45){
+            return 270;
+        }
+        return 0;
     }
 
     private void setButtonRotation(float roll){
         if (mTakePictureButton != null){
-            if (roll < 45 && roll > -45){
-                mTakePictureButton.setRotation(0);
-            }else if (roll < 135 && roll > 45){
-                mTakePictureButton.setRotation(90);
-            }else if (roll > 135 || roll < -135){
-                mTakePictureButton.setRotation(180);
-            }
-            else if (roll > -135 && roll < -45){
-                mTakePictureButton.setRotation(270);
-            }
+            mTakePictureButton.setRotation(get90degreeIntervals(roll));
         }
     }
 
