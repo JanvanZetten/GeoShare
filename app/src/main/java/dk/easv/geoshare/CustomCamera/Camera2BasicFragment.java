@@ -15,9 +15,6 @@ import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -40,7 +37,6 @@ import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Size;
-import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.Surface;
 import android.view.TextureView;
@@ -65,14 +61,12 @@ public class Camera2BasicFragment
         implements
             View.OnClickListener,
             ActivityCompat.OnRequestPermissionsResultCallback,
-            WritingInfoCallback,
-            SensorEventListener {
+            WritingInfoCallback {
 
 //region Instance variables
     //region Static variables
-
     private static final int REQUEST_CAMERA_PERMISSION = 1;
-    private static final String FRAGMENT_DIALOG = "dialog";
+    private static final String FRAGMENT_DIALOG_TAG = "dialog";
     private static final String OUTPUT_FILE_STATE_KEY = "outputFile";
     private static final String TAG = "CustomCamera";
 
@@ -81,24 +75,8 @@ public class Camera2BasicFragment
      */
     private static final int MAX_PREVIEW_WIDTH = 1920;
     private static final int MAX_PREVIEW_HEIGHT = 1080;
-
-    /**
-     * Conversion from screen rotation to JPEG orientation.
-     */
-    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
-    static {
-        ORIENTATIONS.append(Surface.ROTATION_0, 90);
-        ORIENTATIONS.append(Surface.ROTATION_90, 0);
-        ORIENTATIONS.append(Surface.ROTATION_180, 270);
-        ORIENTATIONS.append(Surface.ROTATION_270, 180);
-    }
-
     //endregion
 
-
-    private Sensor mRotationSensor;
-
-    private boolean writeDone = false;
 
     /**
      * ID of the current {@link CameraDevice}.
@@ -187,7 +165,12 @@ public class Camera2BasicFragment
     /**
      * The rotation of the device in 90 degree intervals ie 0, 90, 180 or 270
      */
-    private int currentRotation;
+    private RotationHelper mRotationHelper;
+
+    /**
+     * Is the the writing of the file to the storage done
+     */
+    private boolean writeDone = false;
 //endregion
 
 //region Callbacks
@@ -362,12 +345,11 @@ public class Camera2BasicFragment
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         view.findViewById(R.id.picture).setOnClickListener(this);
         mTakePictureButton = view.findViewById(R.id.picture);
+        View[] rotatingViews = {mTakePictureButton};
         mTextureView = view.findViewById(R.id.texture);
-        int SENSOR_DELAY = 500 * 1000; // 500ms
         try {
-            SensorManager mSensorManager = (SensorManager) getActivity().getSystemService(Activity.SENSOR_SERVICE);
-            mRotationSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
-            mSensorManager.registerListener(this, mRotationSensor, SENSOR_DELAY);
+            SensorManager sensorManager = (SensorManager) getActivity().getSystemService(Activity.SENSOR_SERVICE);
+            mRotationHelper = new RotationHelper(rotatingViews, sensorManager);
         } catch (Exception e) {
             Toast.makeText(getActivity(), "Hardware compatibility issue", Toast.LENGTH_LONG).show();
         }
@@ -412,7 +394,7 @@ public class Camera2BasicFragment
         if (requestCode == REQUEST_CAMERA_PERMISSION) {
             if (grantResults.length != 1 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                 ErrorDialog.newInstance(getString(R.string.request_permission))
-                        .show(getChildFragmentManager(), FRAGMENT_DIALOG);
+                        .show(getChildFragmentManager(), FRAGMENT_DIALOG_TAG);
             }
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -439,30 +421,7 @@ public class Camera2BasicFragment
         this.writeDone = true;
     }
 
-    /**
-     * Called when there is a new sensor event.
-     * @param event the {@link SensorEvent SensorEvent}.
-     */
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        if (event.sensor == mRotationSensor) {
-            if (event.values.length > 4) {
-                float[] truncatedRotationVector = new float[4];
-                System.arraycopy(event.values, 0, truncatedRotationVector, 0, 4);
-                updateRotation(truncatedRotationVector);
-            } else {
-                updateRotation(event.values);
-            }
-        }
-    }
 
-    /**
-     * Called when the accuracy of the registered sensor has changed.
-     */
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        //Not used, but part of the implemented interface SensorEventListener
-    }
 
 //endregion
 
@@ -534,7 +493,7 @@ public class Camera2BasicFragment
 
     private void requestCameraPermission() {
         if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
-            new ConfirmationDialog().show(getChildFragmentManager(), FRAGMENT_DIALOG);
+            new ConfirmationDialog().show(getChildFragmentManager(), FRAGMENT_DIALOG_TAG);
         } else {
             requestPermissions(new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
         }
@@ -650,7 +609,7 @@ public class Camera2BasicFragment
             // Currently an NPE is thrown when the Camera2API is used but not supported on the
             // device this code runs.
             ErrorDialog.newInstance(getString(R.string.camera_error))
-                    .show(getChildFragmentManager(), FRAGMENT_DIALOG);
+                    .show(getChildFragmentManager(), FRAGMENT_DIALOG_TAG);
         }
     }
 
@@ -883,7 +842,7 @@ public class Camera2BasicFragment
             setAutoFlash(captureBuilder);
 
             // Orientation
-            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation());
+            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, mRotationHelper.getJPEGOrientation(mSensorOrientation));
 
             CameraCaptureSession.CaptureCallback CaptureCallback
                     = new CameraCaptureSession.CaptureCallback() {
@@ -923,28 +882,6 @@ public class Camera2BasicFragment
     }
 
     /**
-     * Retrieves the JPEG orientation from the specified screen rotation.
-     * @return The JPEG orientation (one of 0, 90, 270, and 360)
-     */
-    private int getOrientation() {
-        // Sensor orientation is 90 for most devices, or 270 for some devices (eg. Nexus 5X)
-        // We have to take that into account and rotate JPEG properly.
-        // For devices with orientation of 90, we simply return our mapping from ORIENTATIONS.
-        // For devices with orientation of 270, we need to rotate the JPEG 180 degrees.
-        if (currentRotation == 0){
-            currentRotation = 90;
-        } else if (currentRotation == 90){
-            currentRotation = 0;
-        } else if (currentRotation == 180){
-            currentRotation = 270;
-        } else if (currentRotation == 270){
-            currentRotation = 180;
-        }
-
-        return (currentRotation + mSensorOrientation + 270) % 360; // not correct 90+0+270%360 = 360
-    }
-
-    /**
      * Unlock the focus. This method should be called when still image capture sequence is
      * finished.
      */
@@ -971,40 +908,5 @@ public class Camera2BasicFragment
                     CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
         }
     }
-
-    private void updateRotation(float[] vectors) {
-        int FROM_RADS_TO_DEGS = -57;
-        float[] rotationMatrix = new float[9];
-        SensorManager.getRotationMatrixFromVector(rotationMatrix, vectors);
-        int worldAxisX = SensorManager.AXIS_X;
-        int worldAxisZ = SensorManager.AXIS_Z;
-        float[] adjustedRotationMatrix = new float[9];
-        SensorManager.remapCoordinateSystem(rotationMatrix, worldAxisX, worldAxisZ, adjustedRotationMatrix);
-        float[] orientation = new float[3];
-        SensorManager.getOrientation(adjustedRotationMatrix, orientation);
-        float roll = orientation[2] * FROM_RADS_TO_DEGS;
-        currentRotation = get90degreeIntervals(roll);
-        setButtonRotation(roll);
-    }
-
-    private int get90degreeIntervals(float roll) {
-        if (roll < 45 && roll > -45){
-            return 0;
-        }else if (roll < 135 && roll > 45){
-            return 90;
-        }else if (roll > 135 || roll < -135){
-            return 180;
-        }else if (roll > -135 && roll < -45){
-            return 270;
-        }
-        return 0;
-    }
-
-    private void setButtonRotation(float roll){
-        if (mTakePictureButton != null){
-            mTakePictureButton.setRotation(get90degreeIntervals(roll));
-        }
-    }
-
     //endregion
 }
