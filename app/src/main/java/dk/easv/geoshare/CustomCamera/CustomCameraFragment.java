@@ -158,11 +158,6 @@ public class CustomCameraFragment
     private int mSensorOrientation;
 
     /**
-     * The button for taking a picture
-     */
-    private ImageView mTakePictureButton;
-
-    /**
      * The rotation of the device in 90 degree intervals ie 0, 90, 180 or 270
      */
     private RotationHelper mRotationHelper;
@@ -171,6 +166,11 @@ public class CustomCameraFragment
      * Is the the writing of the file to the storage done
      */
     private boolean writeDone = false;
+
+    /**
+     * Tells if it the front-facing camera: true or the back-facing camera: false that should be used
+     */
+    private boolean frontFacing= false;
 //endregion
 
 //region Callbacks
@@ -343,9 +343,13 @@ public class CustomCameraFragment
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
-        view.findViewById(R.id.picture).setOnClickListener(this);
-        mTakePictureButton = view.findViewById(R.id.picture);
-        View[] rotatingViews = {mTakePictureButton};
+        ImageView mTakePictureButton = view.findViewById(R.id.picture);
+        ImageView mSwitchCameraButton = view.findViewById(R.id.switchCamera);
+        mTakePictureButton.setOnClickListener(this);
+        mSwitchCameraButton.setOnClickListener(this);
+
+        View[] rotatingViews = {mTakePictureButton, mSwitchCameraButton};
+
         mTextureView = view.findViewById(R.id.texture);
         try {
             SensorManager sensorManager = (SensorManager) getActivity().getSystemService(Activity.SENSOR_SERVICE);
@@ -406,6 +410,10 @@ public class CustomCameraFragment
         switch (view.getId()) {
             case R.id.picture: {
                 takePicture();
+                break;
+            }
+            case R.id.switchCamera: {
+                switchCamera();
                 break;
             }
         }
@@ -907,6 +915,14 @@ public class CustomCameraFragment
             requestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
                     CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
         }
+    }
+
+    private void switchCamera() {
+        frontFacing = !frontFacing;
+        //stop camera
+
+        //start new camera
+        // TODO Switch the camera facing then start a preview with it
     }
     //endregion
 }
