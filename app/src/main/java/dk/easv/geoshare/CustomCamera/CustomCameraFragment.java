@@ -521,9 +521,11 @@ public class CustomCameraFragment
                 CameraCharacteristics characteristics
                         = manager.getCameraCharacteristics(cameraId);
 
-                // We don't use a front facing camera in this sample.
+                String[] cameras = manager.getCameraIdList();
+                boolean hasFrontFacing = doesArrayContain(cameras, CameraCharacteristics.LENS_FACING_FRONT + "");
+
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-                if (frontFacing){
+                if (frontFacing && hasFrontFacing){
                     if (facing != null && facing != CameraCharacteristics.LENS_FACING_FRONT) {
                         continue;
                     }
@@ -625,6 +627,21 @@ public class CustomCameraFragment
             ErrorDialog.newInstance(getString(R.string.camera_error))
                     .show(getChildFragmentManager(), FRAGMENT_DIALOG_TAG);
         }
+    }
+
+    /**
+     * Checks if the string object is eqaul to one of the objects in the string array
+     * @param array the array to search in
+     * @param item the item to search for
+     * @return true if the array has an item equal to the item, if not false
+     */
+    private boolean doesArrayContain(String[] array, String item) {
+        for (String arrayItem : array) {
+            if(arrayItem.equals(item)){
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
