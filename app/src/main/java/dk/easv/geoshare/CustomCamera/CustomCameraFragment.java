@@ -523,8 +523,14 @@ public class CustomCameraFragment
 
                 // We don't use a front facing camera in this sample.
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-                if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
-                    continue;
+                if (frontFacing){
+                    if (facing != null && facing != CameraCharacteristics.LENS_FACING_FRONT) {
+                        continue;
+                    }
+                }else {
+                    if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
+                        continue;
+                    }
                 }
 
                 StreamConfigurationMap map = characteristics.get(
@@ -920,8 +926,14 @@ public class CustomCameraFragment
     private void switchCamera() {
         frontFacing = !frontFacing;
         //stop camera
+        closeCamera();
 
         //start new camera
+        if (mTextureView.isAvailable()) {
+            openCamera(mTextureView.getWidth(), mTextureView.getHeight());
+        } else {
+            mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
+        }
         // TODO Switch the camera facing then start a preview with it
     }
     //endregion
