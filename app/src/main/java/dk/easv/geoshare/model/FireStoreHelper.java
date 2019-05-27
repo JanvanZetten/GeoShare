@@ -45,8 +45,10 @@ public class FireStoreHelper {
      * gets all the documents from the phoneMetaData collection
      */
     public void getPhotoMeta() {
-        final CollectionReference colRef = db.collection("photoMetaData");
-        colRef.addSnapshotListener(new EventListener<QuerySnapshot>() {
+        long dayBefore = System.currentTimeMillis() - MILLIS_PER_DAY;
+        db.collection("photoMetaData")
+                .whereGreaterThanOrEqualTo("timestamp", dayBefore)
+                .addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
             public void onEvent(@Nullable QuerySnapshot snapshots,
                                 @Nullable FirebaseFirestoreException e) {
@@ -55,19 +57,17 @@ public class FireStoreHelper {
                     return;
                 }
                 photoMetaDataArrayList.clear();
-
+                Log.d(TAG, "onEvent: " + snapshots.size());
                 for (QueryDocumentSnapshot snapShot : snapshots) {
                     Map<String, Object> data = snapShot.getData();
-                    long dayBefore = System.currentTimeMillis() - MILLIS_PER_DAY;
-                    if ((long) data.get("timestamp") > dayBefore) {
                         PhotoMetaData photoMetaData = new PhotoMetaData(
                                 (Double) data.get("lat")
                                 , (Double) data.get("lng")
                                 , (long) data.get("timestamp"));
                         photoMetaData.setPhotoID(data.get("photoId").toString());
                         photoMetaData.setPhotoUrl(data.get("photoUrl").toString());
+                        Log.d(TAG, "onEvent, Picture URLID/URL" + photoMetaData.getPhotoID() + photoMetaData.getPhotoUrl());
                         photoMetaDataArrayList.add(photoMetaData);
-                    }
                 }
 
                 ObservableArrayList.setPhotoMetaDataArrayList(photoMetaDataArrayList);
