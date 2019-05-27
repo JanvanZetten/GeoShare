@@ -882,8 +882,7 @@ public class CustomCameraFragment
                 public void onCaptureCompleted(@NonNull CameraCaptureSession session,
                                                @NonNull CaptureRequest request,
                                                @NonNull TotalCaptureResult result) {
-                    showToast("Saved: " + mFile);
-                    Log.d(TAG, mFile.toString());
+                    Log.d(TAG, "Saved photo in file: " + mFile.toString());
                     unlockFocus();
                     Activity activity = getActivity();
                     activity.setResult(Activity.RESULT_OK);

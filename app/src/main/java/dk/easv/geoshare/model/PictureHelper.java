@@ -51,7 +51,8 @@ public class PictureHelper {
     private void openCamera(int requstCode) {
         photoFile = getOutputMediaFile(); // create a file to save the image
         if (photoFile == null) {
-            Toast.makeText(context, "Could not create file...", Toast.LENGTH_LONG).show();
+            Toast.makeText(context, "An Error happend", Toast.LENGTH_LONG).show();
+            Log.e(LOGTAG, "Could not create file");
             return;
         }
 
